@@ -3,6 +3,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
+from sklearn.impute import SimpleImputer
 
 train_set_path = "./DataSources/train.csv"
 train_data = pd.read_csv(train_set_path)
@@ -12,11 +13,13 @@ train_data = pd.read_csv(train_set_path)
 #print(train_data.columns)
 
 
-
 # Prediction-Features definieren
 features_1 = ['SibSp']
+features_2 = ['Age']
+features_3 = ['SibSp','Age']
 
-X = train_data[features_1]
+X = train_data[features_3]
+
 #pd.DataFrame(X).fillna(1)
 #print(X.head)
 
@@ -26,21 +29,49 @@ y = train_data['Survived']
 
 train_X, val_X, train_y, val_y = train_test_split(X, y, random_state = 6)
 
+#Extend and Impute missing Values
 
+# Make copy to avoid changing original data (when imputing)
+train_X_plus = train_X.copy()
+val_X_plus = val_X.copy()
+
+# Make new columns indicating what will be imputed
+
+# Get names of columns with missing values
+cols_with_missing = [col for col in train_X.columns
+                     if train_X[col].isnull().any()]
+
+
+for col in cols_with_missing:
+    train_X_plus[col + '_was_missing'] = train_X_plus[col].isnull()
+    val_X_plus[col + '_was_missing'] = val_X_plus[col].isnull()
+
+
+my_imputer = SimpleImputer()
+
+imputed_train_X = pd.DataFrame(my_imputer.fit_transform(train_X))
+imputed_val_X = pd.DataFrame(my_imputer.transform(val_X))
+
+# Imputation removed column names; put them back
+imputed_train_X.columns = train_X.columns
+imputed_val_X.columns = val_X.columns
+
+
+#------ DecisionTree-Model
+"""
 model = DecisionTreeClassifier (random_state=8)
 model.fit(train_X,train_y)
 
-
 predictions = model.predict(val_X)
 print(mean_absolute_error(val_y, predictions))
-
+"""
 #------------------- Das Gleiche mit einem RandomForrest-Classifier
 
-model = RandomForestClassifier (random_state=8)
-model.fit(train_X,train_y)
+model = RandomForestClassifier (random_state=1, max_depth=50)
+model.fit(imputed_train_X,train_y)
 
 
-predictions = model.predict(val_X)
+predictions = model.predict(imputed_val_X)
 print(mean_absolute_error(val_y, predictions))
 
 #--------------------------------
