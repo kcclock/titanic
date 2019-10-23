@@ -8,6 +8,9 @@ from sklearn.impute import SimpleImputer
 train_set_path = "./DataSources/train.csv"
 train_data = pd.read_csv(train_set_path)
 
+test_set_path = "./DataSources/test.csv"
+test_data = pd.read_csv(test_set_path)
+
 #print(train_data.describe())
 #print(train_data.head)
 #print(train_data.columns)
@@ -20,7 +23,9 @@ features_3 = ['SibSp','Age']
 features_4 = ['SibSp','Pclass','PassengerId', 'Age', 'Parch']
 features_5 = ['Pclass', 'SibSp']
 
-X = train_data[features_5]
+X = train_data[features_4]
+X_test = test_data[features_4]
+
 
 #pd.DataFrame(X).fillna(1)
 #print(X.head)
@@ -29,7 +34,10 @@ X = train_data[features_5]
 y = train_data['Survived']
 
 
-train_X, val_X, train_y, val_y = train_test_split(X, y, random_state = 2)
+#train_X, val_X, train_y, val_y = train_test_split(X, y, random_state = 2)
+train_X = X
+train_y = y
+val_X = X_test
 
 #Extend and Impute missing Values
 
@@ -73,8 +81,17 @@ model.fit(imputed_train_X,train_y)
 
 #print(imputed_train_X.head)
 
-predictions = model.predict(imputed_val_X)
-print(mean_absolute_error(val_y, predictions))
+
+#predictions = model.predict(imputed_train_X)
+
+# Generate test predictions
+preds_test = model.predict(imputed_val_X)
+
+
+# Save predictions in format used for competition scoring
+output = pd.DataFrame({'PassengerId': imputed_val_X.index,
+                       'Survived': preds_test})
+output.to_csv('submission.csv', index=False)
 
 #--------------------------------
 
