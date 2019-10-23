@@ -89,7 +89,7 @@ preds_test = model.predict(imputed_val_X)
 
 
 # Save predictions in format used for competition scoring
-output = pd.DataFrame({'PassengerId': imputed_val_X.index,
+output = pd.DataFrame({'PassengerId': imputed_val_X.index+892,
                        'Survived': preds_test})
 output.to_csv('submission.csv', index=False)
 
